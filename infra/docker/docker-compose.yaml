@@ -266,6 +266,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       # project external connections (per-project S3/Postgres/Qdrant/embeddings)
       ENCRYPTION_MASTER_KEY: ${ENCRYPTION_MASTER_KEY:-}
+      NLIP_ALLOWED_ORIGINS: ${NLIP_ALLOWED_ORIGINS:-}
       ALLOWED_EMBEDDING_PROVIDERS: ${ALLOWED_EMBEDDING_PROVIDERS:-openai,ollama}
       SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS:-}
       # Sim AI
