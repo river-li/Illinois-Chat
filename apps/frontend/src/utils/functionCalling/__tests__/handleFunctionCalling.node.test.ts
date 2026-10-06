@@ -11,6 +11,55 @@ vi.mock('posthog-js', () => ({
 }))
 
 describe('handleFunctionCalling (node)', () => {
+  it('executes an NLIP tool through the project API with only its id and question', async () => {
+    const { callSimFunction } = await import('../handleFunctionCalling')
+    const output = {
+      text: 'Orientation is at 09:00',
+      data: { protocol: 'NLIP' },
+    }
+    const fetch = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(Response.json({ success: true, output }))
+    const tool = {
+      id: 'nlip:lab',
+      name: 'ask_nlip_lab',
+      readableName: 'Ask Lab TA (NLIP)',
+      description: 'Ask for lab details',
+      aiGeneratedArgumentValues: {
+        question: 'When is orientation?',
+        endpoint: 'http://ignored',
+      },
+    }
+
+    expect(await callSimFunction(tool, 'course_slides')).toEqual(output)
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/UIUC-api/tools/nlipTools?course_name=course_slides',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ id: 'lab', question: 'When is orientation?' }),
+      }),
+    )
+  })
+
+  it('propagates NLIP execution failures instead of returning successful tool evidence', async () => {
+    const { callSimFunction } = await import('../handleFunctionCalling')
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      Response.json({ error: 'NLIP agent unavailable' }, { status: 502 }),
+    )
+    await expect(
+      callSimFunction(
+        {
+          id: 'nlip:lab',
+          name: 'ask_nlip_lab',
+          readableName: 'Lab',
+          description: 'Lab',
+          aiGeneratedArgumentValues: { question: 'When?' },
+        },
+        'course_slides',
+      ),
+    ).rejects.toThrow('NLIP agent unavailable')
+  })
+
   it('fetchSimTools returns [] when course_name is missing', async () => {
     const { fetchSimTools } = await import('../handleFunctionCalling')
     await expect(fetchSimTools()).resolves.toEqual([])
