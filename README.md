@@ -154,6 +154,9 @@ Projects can bring their own S3, PostgreSQL/pgvector, Qdrant, and embedding
 provider — see [`docs/external-connections-setup.md`](docs/external-connections-setup.md)
 for provisioning an external database and registering per-project connections.
 
+For NLIP agent communication, architecture, configuration, and a two-project
+walkthrough, see [NLIP integration](docs/nlip-integration.md).
+
 ## License
 
 Illinois Chat is licensed under the Apache License, Version 2.0. See `LICENSE`.
