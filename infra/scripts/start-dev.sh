@@ -253,6 +253,7 @@ ensure_local_app_envs() {
 	append_env_if_missing "$frontend_env" "NEXT_PUBLIC_POSTHOG_KEY" ""
 	append_env_if_missing "$frontend_env" "POSTHOG_API_KEY" ""
 	append_env_if_missing "$frontend_env" "ENCRYPTION_MASTER_KEY" "$encryption_master_key"
+	append_env_if_missing "$frontend_env" "NLIP_ALLOWED_ORIGINS" "${NLIP_ALLOWED_ORIGINS:-}"
 	append_env_if_missing "$frontend_env" "ALLOWED_EMBEDDING_PROVIDERS" "$allowed_embedding_providers"
 
 	local crawlee_env="apps/crawlee/.env"
