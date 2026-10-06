@@ -32,6 +32,7 @@ import { useResponsiveCardWidth } from '~/utils/responsiveGrid'
 import { CannotEditCourse } from './CannotEditCourse'
 import GlobalFooter from './GlobalFooter'
 import { LoadingPlaceholderForAdminPages } from './MainPageBackground'
+import NlipAgentsPanel from './NlipAgentsPanel'
 
 interface ToolRoutingStatus {
   status: 'custom' | 'default' | 'offline'
@@ -79,6 +80,7 @@ const SimPage = ({ course_name }: { course_name: string }) => {
     error: workflowsError,
     refetch: refetchWorkflows,
   } = useFetchAllWorkflows(course_name)
+  const simWorkflows = workflows?.filter((tool) => !tool.id.startsWith('nlip:'))
 
   // Load saved config on mount. The stored project row is the only source of
   // truth — the browser holds no copy of the credentials, so every user of the
@@ -221,10 +223,10 @@ const SimPage = ({ course_name }: { course_name: string }) => {
       setSidebarCollapsed={setSidebarCollapsed}
     >
       <Head>
-        <title>{course_name} - Sim AI Tools</title>
+        <title>{course_name} - Agent Tools</title>
         <meta
           name="description"
-          content="Configure Sim AI tool calling for your project."
+          content="Configure Sim AI tools and NLIP agent communication for your project."
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -471,7 +473,7 @@ const SimPage = ({ course_name }: { course_name: string }) => {
               {hasSavedConfig &&
                 isSuccess &&
                 workflows &&
-                workflows.length === 0 && (
+                simWorkflows?.length === 0 && (
                   <p
                     className={`${montserrat_paragraph.variable} font-montserratParagraph p-4 text-(--foreground) opacity-70`}
                   >
@@ -482,7 +484,8 @@ const SimPage = ({ course_name }: { course_name: string }) => {
               {hasSavedConfig &&
                 isSuccess &&
                 workflows &&
-                workflows.length > 0 && (
+                simWorkflows &&
+                simWorkflows.length > 0 && (
                   <Table
                     aria-label="Deployed Sim AI workflows"
                     className={`${montserrat_paragraph.variable} font-montserratParagraph`}
@@ -495,7 +498,7 @@ const SimPage = ({ course_name }: { course_name: string }) => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {workflows.map((tool, index) => (
+                      {simWorkflows.map((tool, index) => (
                         <TableRow
                           key={tool.id}
                           // The shadcn table only draws separators, so the
@@ -547,6 +550,7 @@ const SimPage = ({ course_name }: { course_name: string }) => {
                   </Table>
                 )}
             </Card>
+            <NlipAgentsPanel project={course_name} />
           </div>
         </div>
       </main>
