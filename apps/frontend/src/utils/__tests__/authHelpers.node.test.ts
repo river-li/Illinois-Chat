@@ -18,15 +18,6 @@ describe('getKeycloakBaseUrl (node)', () => {
     delete (globalThis as any).window
   })
 
-  it('returns localhost Keycloak when window hostname is 127.0.0.1', () => {
-    vi.stubEnv('NEXT_PUBLIC_KEYCLOAK_URL', '')
-    ;(globalThis as any).window = {
-      location: { hostname: '127.0.0.1', origin: 'http://127.0.0.1:3000' },
-    }
-    expect(getKeycloakBaseUrl()).toBe('http://localhost:8080/')
-    delete (globalThis as any).window
-  })
-
   it('returns uiuc.chat login base when window hostname is uiuc.chat', () => {
     vi.stubEnv('NEXT_PUBLIC_KEYCLOAK_URL', '')
     ;(globalThis as any).window = {

@@ -14,28 +14,6 @@ export const initiateSignIn = (auth: any, redirectPath: string) => {
   return auth.signinRedirect({ state })
 }
 
-/** Host header or window.hostname, with or without a port. */
-export function isLocalLoopbackHost(hostname: string | undefined): boolean {
-  if (!hostname) return false
-  if (hostname.startsWith('[')) {
-    const end = hostname.indexOf(']')
-    return end >= 0 && hostname.slice(1, end) === '::1'
-  }
-  if (hostname === '::1' || hostname.startsWith('::1:')) return true
-  const host = hostname.split(':')[0]
-  return host === 'localhost' || host === '127.0.0.1'
-}
-
-/** Keycloak allowlists localhost, not 127.0.0.1. Rewrite loopback IPs. */
-export function canonicalLocalAppHref(href: string): string | null {
-  const url = new URL(href)
-  if (!isLocalLoopbackHost(url.hostname) || url.hostname === 'localhost') {
-    return null
-  }
-  url.hostname = 'localhost'
-  return url.toString()
-}
-
 // frontend
 export const getKeycloakBaseUrl = () => {
   if (
@@ -49,7 +27,7 @@ export const getKeycloakBaseUrl = () => {
 
   const hostname = window.location.hostname
 
-  if (isLocalLoopbackHost(hostname)) {
+  if (hostname === 'localhost') {
     return 'http://localhost:8080/'
   }
 
@@ -71,7 +49,7 @@ export function getKeycloakBaseFromHost(hostname: string | undefined): string {
   ) {
     return process.env.NEXT_PUBLIC_KEYCLOAK_URL
   }
-  if (isLocalLoopbackHost(hostname)) return 'http://localhost:8080/'
+  if (hostname === 'localhost') return 'http://localhost:8080/'
   if (hostname === 'uiuc.chat') return 'https://login.uiuc.chat/'
   return `https://${hostname}/keycloak/`
 }
@@ -85,8 +63,7 @@ export function getKeycloakIssuerUrl(hostname: string | undefined): string {
   ) {
     return `${process.env.NEXT_PUBLIC_KEYCLOAK_URL}realms/${realm}`
   }
-  if (isLocalLoopbackHost(hostname))
-    return `http://localhost:8080/realms/${realm}`
+  if (hostname === 'localhost') return `http://localhost:8080/realms/${realm}`
   if (hostname === 'uiuc.chat') return `https://login.uiuc.chat/realms/${realm}`
   return `https://${hostname}/keycloak/realms/${realm}`
 }

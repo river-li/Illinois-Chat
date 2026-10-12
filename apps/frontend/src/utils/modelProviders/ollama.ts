@@ -35,7 +35,6 @@ export enum OllamaModelIDs {
   GEMMA3_27B = 'gemma3:27b',
   LLAMA4_16x17B = 'llama4:16x17b',
   QWEN3_32B = 'qwen3:32b',
-  QWEN35_9B = 'qwen3.5:9b',
   DEEPSEEK_R1_70B = 'deepseek-r1:70b',
   LLAMA31_70B_INSTRUCT_FP16 = 'llama3.1:70b-instruct-fp16',
 }
@@ -133,13 +132,6 @@ export const OllamaModels: Record<OllamaModelIDs, OllamaModel> = {
     name: 'Qwen 3 32B',
     parameterSize: '32B',
     tokenLimit: 8_192,
-    enabled: true,
-  },
-  [OllamaModelIDs.QWEN35_9B]: {
-    id: OllamaModelIDs.QWEN35_9B,
-    name: 'Qwen 3.5 9B',
-    parameterSize: '9B',
-    tokenLimit: 32_768,
     enabled: true,
   },
   [OllamaModelIDs.DEEPSEEK_R1_70B]: {

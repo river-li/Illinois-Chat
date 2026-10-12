@@ -46,7 +46,6 @@ describe('getOllamaModels', () => {
         JSON.stringify({
           models: [
             { model: OllamaModelIDs.LLAMA32_1b_fp16 },
-            { model: OllamaModelIDs.QWEN35_9B },
             { model: 'unknown-model' },
           ],
         }),
@@ -62,7 +61,6 @@ describe('getOllamaModels', () => {
     const result = await getOllamaModels(provider)
     expect(result.models?.map((m: any) => m.id)).toEqual([
       OllamaModelIDs.LLAMA32_1b_fp16,
-      OllamaModelIDs.QWEN35_9B,
     ])
   })
 

@@ -1,7 +1,7 @@
 import { AuthProvider, useAuth } from 'react-oidc-context'
 import React, { type ReactNode, useEffect, useState } from 'react'
 import { WebStorageStateStore } from 'oidc-client-ts'
-import { canonicalLocalAppHref, getKeycloakBaseUrl } from '~/utils/authHelpers'
+import { getKeycloakBaseUrl } from '~/utils/authHelpers'
 import Link from 'next/link'
 import { montserrat_heading } from '../../fonts'
 import { AuthCookie } from '~/providers/AuthCookie'
@@ -90,11 +90,6 @@ export const KeycloakProvider = ({ children }: AuthProviderProps) => {
   // Set up client-side values after mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const canonical = canonicalLocalAppHref(window.location.href)
-      if (canonical) {
-        window.location.replace(canonical)
-        return
-      }
       const baseUrl = getBaseUrl()
       const searchParams = new URLSearchParams(window.location.search)
       const isSilentRenewPath = window.location.pathname === '/silent-renew'

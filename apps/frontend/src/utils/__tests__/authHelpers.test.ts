@@ -1,11 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
-  canonicalLocalAppHref,
   getKeycloakBaseFromHost,
   getKeycloakBaseUrl,
   getKeycloakIssuerUrl,
   initiateSignIn,
-  isLocalLoopbackHost,
 } from '../authHelpers'
 
 function decodeBase64Url(input: string) {
@@ -35,30 +33,9 @@ describe('initiateSignIn', () => {
   })
 })
 
-describe('loopback hosts', () => {
-  it('treats 127.0.0.1 with a port as local', () => {
-    expect(isLocalLoopbackHost('127.0.0.1')).toBe(true)
-    expect(isLocalLoopbackHost('127.0.0.1:3000')).toBe(true)
-    expect(isLocalLoopbackHost('localhost')).toBe(true)
-    expect(isLocalLoopbackHost('[::1]:3000')).toBe(true)
-    expect(isLocalLoopbackHost('example.com')).toBe(false)
-  })
-
-  it('rewrites 127.0.0.1 app URLs to localhost for Keycloak', () => {
-    expect(canonicalLocalAppHref('http://127.0.0.1:3000/sign-in')).toBe(
-      'http://localhost:3000/sign-in',
-    )
-    expect(canonicalLocalAppHref('http://localhost:3000/sign-in')).toBeNull()
-  })
-})
-
 describe('keycloak base URL helpers', () => {
   it('getKeycloakBaseFromHost handles common hostnames', () => {
     expect(getKeycloakBaseFromHost('localhost')).toBe('http://localhost:8080/')
-    expect(getKeycloakBaseFromHost('127.0.0.1')).toBe('http://localhost:8080/')
-    expect(getKeycloakBaseFromHost('127.0.0.1:3000')).toBe(
-      'http://localhost:8080/',
-    )
     expect(getKeycloakBaseFromHost('uiuc.chat')).toBe(
       'https://login.uiuc.chat/',
     )
@@ -112,9 +89,6 @@ describe('keycloak base URL helpers', () => {
     vi.stubEnv('NEXT_PUBLIC_KEYCLOAK_URL', '')
     expect(getKeycloakIssuerUrl('uiuc.chat')).toBe(
       'https://login.uiuc.chat/realms/illinois_chat_realm',
-    )
-    expect(getKeycloakIssuerUrl('127.0.0.1:3000')).toBe(
-      'http://localhost:8080/realms/illinois_chat_realm',
     )
     expect(getKeycloakIssuerUrl('example.com')).toBe(
       'https://example.com/keycloak/realms/illinois_chat_realm',
