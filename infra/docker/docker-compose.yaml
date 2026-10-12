@@ -226,6 +226,8 @@ services:
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - uiuc-chat-network
     environment:
@@ -266,6 +268,7 @@ services:
       QDRANT_URL: http://qdrant:6333
       # project external connections (per-project S3/Postgres/Qdrant/embeddings)
       ENCRYPTION_MASTER_KEY: ${ENCRYPTION_MASTER_KEY:-}
+      NLIP_ALLOWED_ORIGINS: ${NLIP_ALLOWED_ORIGINS:-}
       ALLOWED_EMBEDDING_PROVIDERS: ${ALLOWED_EMBEDDING_PROVIDERS:-openai,ollama}
       SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS:-}
       # Sim AI
@@ -290,6 +293,8 @@ services:
       context: ./apps/backend
       dockerfile: Self-Hosted-Dockerfile
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - uiuc-chat-network
     #    ports:
@@ -339,6 +344,8 @@ services:
       context: ./apps/backend/ai_ta_backend/rabbitmq
       dockerfile: Dockerfile
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     #    ports:
     #      - "8001:8001"
     networks:

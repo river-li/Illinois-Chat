@@ -67,6 +67,7 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import { IntermediateStateAccordion } from '../UIUC-Components/IntermediateStateAccordion'
 import { AgentExecutionTimeline } from './AgentExecutionTimeline'
+import { NlipConversation } from './NlipConversation'
 import { FeedbackModal } from './FeedbackModal'
 
 const imageContainerClassName = 'max-w-[25%] flex-[1_0_21%] p-2 rounded-lg'
@@ -522,6 +523,12 @@ export const ChatMessage = memo(
       ? message.agentEvents
       : []
     const hasAgentEvents = agentEvents.length > 0
+    const nlipTools = message.tools?.filter((tool) =>
+      tool.name?.startsWith('ask_nlip_'),
+    )
+    const otherTools = message.tools?.filter(
+      (tool) => !tool.name?.startsWith('ask_nlip_'),
+    )
 
     // Remove the local state for sources sidebar and use only context
     const isSourcesSidebarOpen = activeSidebarMessageId === message.id
@@ -1952,9 +1959,7 @@ export const ChatMessage = memo(
                                       return (
                                         <div
                                           key={index}
-                                          className={
-                                            imageContainerClassName
-                                          }
+                                          className={imageContainerClassName}
                                         >
                                           <div className="overflow-hidden rounded-lg">
                                             <ImagePreview
@@ -2029,6 +2034,7 @@ export const ChatMessage = memo(
                             <AgentExecutionTimeline
                               events={agentEvents}
                               isRunning={isCurrentAgentRunMessage}
+                              projectName={courseName}
                             />
                           ) : (
                             <>
@@ -2137,7 +2143,7 @@ export const ChatMessage = memo(
                                       0) -
                                       2) && (
                                   <>
-                                    {message.tools.map((response, index) => (
+                                    {otherTools?.map((response, index) => (
                                       <IntermediateStateAccordion
                                         key={`routing-${index}`}
                                         accordionKey={`routing-${index}`}
@@ -2219,7 +2225,7 @@ export const ChatMessage = memo(
                                   (selectedConversation?.messages.length ?? 0) -
                                     2) && (
                                 <>
-                                  {message.tools?.map((response, index) => (
+                                  {otherTools?.map((response, index) => (
                                     <IntermediateStateAccordion
                                       key={`tool-${index}`}
                                       accordionKey={`tool-${index}`}
@@ -2294,6 +2300,34 @@ export const ChatMessage = memo(
                                   ))}
                                 </>
                               )}
+
+                              {nlipTools?.map((tool, index) => (
+                                <NlipConversation
+                                  key={
+                                    tool.invocationId || `${tool.id}-${index}`
+                                  }
+                                  sourceProject={courseName}
+                                  toolName={tool.name}
+                                  readableName={tool.readableName}
+                                  question={
+                                    tool.aiGeneratedArgumentValues?.question
+                                  }
+                                  reply={
+                                    typeof tool.output?.data?.nlipReplyText ===
+                                      'string' && tool.output.data.nlipReplyText
+                                      ? tool.output.data.nlipReplyText
+                                      : tool.output?.text
+                                  }
+                                  status={
+                                    tool.error
+                                      ? 'error'
+                                      : tool.output !== undefined
+                                        ? 'done'
+                                        : 'running'
+                                  }
+                                  errorMessage={tool.error}
+                                />
+                              ))}
 
                               {/* Only show "Generating final response" for NON-agent mode.
                                   Agent mode shows status via AgentExecutionTimeline instead. */}

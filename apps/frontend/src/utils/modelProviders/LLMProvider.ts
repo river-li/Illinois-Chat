@@ -328,6 +328,7 @@ export const ReasoningCapableModels: Set<
   OpenAICompatibleModelID.Ollama_DeepSeek_R1_32B,
   OpenAICompatibleModelID.Ollama_DeepSeek_R1_14B,
   OpenAICompatibleModelID.Ollama_Qwen3_32B,
+  OpenAICompatibleModelID.Ollama_Qwen35_9B,
   // NCSA-hosted reasoning models
   NCSAHostedVLMModelID.QWEN3_5_27B,
   NCSAHostedVLMModelID.QWEN3_6_27B,

@@ -130,6 +130,93 @@ async function renderAgentTimelineMessage({
 }
 
 describe('ChatMessage', () => {
+  it('displays persisted NLIP exchanges on earlier ordinary-chat messages', async () => {
+    const { ChatMessage, SourcesSidebarProvider } =
+      await import('../ChatMessage')
+    const oldMessage = makeMessage({
+      id: 'old-nlip',
+      role: 'user',
+      content: 'Should I bring a raincoat?',
+      tools: [
+        {
+          id: 'nlip:weather',
+          name: 'ask_nlip_weather',
+          readableName: 'Ask Weather Agent (NLIP)',
+          description: 'Weather questions',
+          aiGeneratedArgumentValues: { question: 'Will it rain in Champaign?' },
+          output: {
+            text: 'The demo forecast predicts rain. Bring a raincoat.\n{"rain":true}',
+            data: {
+              nlipReplyText:
+                'The demo forecast predicts rain. Bring a raincoat.',
+            },
+          },
+        },
+      ],
+    })
+    const conversation = makeConversation({
+      messages: [
+        oldMessage,
+        makeMessage({ id: 'a-old', role: 'assistant' }),
+        makeMessage({ id: 'u-new' }),
+        makeMessage({ id: 'a-new', role: 'assistant' }),
+      ],
+    })
+    renderWithProviders(
+      <SourcesSidebarProvider>
+        <ChatMessage message={oldMessage} messageIndex={0} courseName="CS101" />
+      </SourcesSidebarProvider>,
+      {
+        homeState: {
+          selectedConversation: conversation,
+          messageIsStreaming: false,
+          loading: false,
+        },
+      },
+    )
+    expect(
+      await screen.findByRole('region', {
+        name: 'Conversation with Weather Agent',
+      }),
+    ).toHaveTextContent('CS101 → Weather Agent')
+    expect(screen.getByText('Will it rain in Champaign?')).toBeInTheDocument()
+    expect(
+      screen.getByText('The demo forecast predicts rain. Bring a raincoat.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Arguments :')).not.toBeInTheDocument()
+  }, 10_000)
+
+  it('shows agent-to-agent messages in the original Agent Mode timeline', async () => {
+    const user = userEvent.setup()
+    await renderAgentTimelineMessage({
+      messageId: 'nlip-agent-mode',
+      agentEvents: [
+        {
+          id: 'nlip-lab-call',
+          stepNumber: 1,
+          type: 'tool',
+          status: 'done',
+          title: 'Ask Lab TA (NLIP)',
+          createdAt: '2026-03-09T20:00:00.000Z',
+          metadata: {
+            toolName: 'ask_nlip_lab',
+            readableToolName: 'Ask Lab TA (NLIP)',
+            arguments: { question: 'Where should students meet?' },
+            outputText: 'At the north entrance.',
+          },
+        },
+      ],
+    })
+    await user.click(
+      await screen.findByRole('button', { name: /Agent reasoning/ }),
+    )
+    expect(
+      await screen.findByRole('region', { name: 'Conversation with Lab TA' }),
+    ).toHaveTextContent('CS101 → Lab TA')
+    expect(screen.getByText('Where should students meet?')).toBeInTheDocument()
+    expect(screen.getByText('At the north entrance.')).toBeInTheDocument()
+  }, 10_000)
+
   it('keeps agent timeline active for the current in-progress user message', async () => {
     await renderAgentTimelineMessage({
       messageId: 'u-agent',

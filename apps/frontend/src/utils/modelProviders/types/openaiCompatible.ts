@@ -163,6 +163,7 @@ export enum OpenAICompatibleModelID {
   Ollama_DeepSeek_R1_32B = 'deepseek-r1:32b',
   Ollama_DeepSeek_R1_14B = 'deepseek-r1:14b-qwen-distill-fp16',
   Ollama_Qwen3_32B = 'qwen3:32b',
+  Ollama_Qwen35_9B = 'qwen3.5:9b',
   Ollama_Llama4_16x17B = 'llama4:16x17b',
   Ollama_Llama3_1_70B = 'llama3.1:70b-instruct-fp16',
   Ollama_Gemma3_27B = 'gemma3:27b',
@@ -712,6 +713,12 @@ export const OpenAICompatibleModels: Record<
   [OpenAICompatibleModelID.Ollama_Qwen3_32B]: {
     id: OpenAICompatibleModelID.Ollama_Qwen3_32B,
     name: 'Ollama: Qwen3 32B',
+    tokenLimit: 131072,
+    enabled: true,
+  },
+  [OpenAICompatibleModelID.Ollama_Qwen35_9B]: {
+    id: OpenAICompatibleModelID.Ollama_Qwen35_9B,
+    name: 'Ollama: Qwen 3.5 9B',
     tokenLimit: 131072,
     enabled: true,
   },

@@ -1,5 +1,8 @@
 import { ProviderNames, type OpenAICompatibleProvider } from '../LLMProvider'
-import { OpenAICompatibleModels } from '../types/openaiCompatible'
+import {
+  OpenAICompatibleModels,
+  type OpenAICompatibleModel,
+} from '../types/openaiCompatible'
 import { isCountryOfConcern } from '../countriesOfConcern'
 import { decryptKeyIfNeeded } from '~/utils/crypto'
 
@@ -12,6 +15,52 @@ interface ModelResponse {
 
 interface ModelsApiResponse {
   data?: ModelResponse[]
+}
+
+const UNKNOWN_MODEL_TOKEN_LIMIT = 128_000
+
+function isEmbeddingModelId(id: string): boolean {
+  return /embed/i.test(id)
+}
+
+function catalogByLowerId(): Map<string, OpenAICompatibleModel> {
+  return new Map(
+    Object.values(OpenAICompatibleModels).map((model) => [
+      model.id.toLowerCase(),
+      model,
+    ]),
+  )
+}
+
+function resolveEndpointModel(
+  availableId: string,
+  catalog: Map<string, OpenAICompatibleModel>,
+  existing: OpenAICompatibleModel[] | undefined,
+): OpenAICompatibleModel | null {
+  const id = availableId.trim()
+  if (!id || isEmbeddingModelId(id)) return null
+
+  const known = catalog.get(id.toLowerCase())
+  const existingModel = existing?.find(
+    (model) => model.id.toLowerCase() === id.toLowerCase(),
+  )
+  const flagged = isCountryOfConcern(known?.id ?? id)
+
+  if (known) {
+    return {
+      ...known,
+      enabled: existingModel?.enabled ?? (flagged ? false : known.enabled),
+      default: existingModel?.default ?? known.default,
+    }
+  }
+
+  return {
+    id,
+    name: id,
+    tokenLimit: existingModel?.tokenLimit ?? UNKNOWN_MODEL_TOKEN_LIMIT,
+    enabled: existingModel?.enabled ?? !flagged,
+    default: existingModel?.default ?? false,
+  }
 }
 
 export const getOpenAICompatibleModels = async (
@@ -90,33 +139,24 @@ export const getOpenAICompatibleModels = async (
       return openAICompatibleProvider
     }
 
-    // Filter to only show models that are:
-    // 1. In our hardcoded list (OpenAICompatibleModels)
-    // 2. Available on the endpoint (if we successfully fetched the list)
-    const compatibleModels = Object.values(OpenAICompatibleModels)
-      .filter((model) => {
-        // Only include models that are available on the endpoint
-        if (availableModelIds.length > 0) {
-          // Case-insensitive matching to handle different casing conventions
-          return availableModelIds.some(
-            (availableId) =>
-              availableId.toLowerCase() === model.id.toLowerCase(),
-          )
-        }
-        // If no models were fetched (but no error), return empty array
-        return false
-      })
-      .map((model) => {
-        const existingModel = openAICompatibleProvider.models?.find(
-          (m) => m.id.toLowerCase() === model.id.toLowerCase(),
-        )
-        const flagged = isCountryOfConcern(model.id)
-        return {
-          ...model,
-          enabled: existingModel?.enabled ?? (flagged ? false : model.enabled),
-          default: existingModel?.default ?? model.default,
-        }
-      })
+    // The endpoint is the source of truth (LiteLLM, vLLM, Ollama /v1, etc.).
+    // Catalog entries only supply display names and token limits for known IDs.
+    const catalog = catalogByLowerId()
+    const seen = new Set<string>()
+    const compatibleModels: OpenAICompatibleModel[] = []
+    for (const availableId of availableModelIds) {
+      if (typeof availableId !== 'string') continue
+      const resolved = resolveEndpointModel(
+        availableId,
+        catalog,
+        openAICompatibleProvider.models,
+      )
+      if (!resolved) continue
+      const key = resolved.id.toLowerCase()
+      if (seen.has(key)) continue
+      seen.add(key)
+      compatibleModels.push(resolved)
+    }
 
     openAICompatibleProvider.models = compatibleModels
     return openAICompatibleProvider

@@ -20,6 +20,9 @@ function workflowsResponse(workflows: unknown[]) {
 describe('useFetchAllWorkflows', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+      Response.json({ tools: [] }),
+    )
   })
 
   afterEach(() => {
@@ -27,12 +30,8 @@ describe('useFetchAllWorkflows', () => {
     vi.useRealTimers()
   })
 
-  it('wires queryKey + queryFn to fetchSimTools', async () => {
+  it('keeps the existing Sim discovery query and workflow conversion', async () => {
     const { useFetchAllWorkflows } = await import('../handleFunctionCalling')
-
-    // Simulate localStorage credentials so fetchSimTools makes a fetch call
-    localStorage.setItem('sim_api_key_proj', 'sk-sim-test')
-    localStorage.setItem('sim_workspace_id_proj', 'ws-123')
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(
@@ -58,6 +57,57 @@ describe('useFetchAllWorkflows', () => {
     expect(data[0].name).toBe('sim_my_workflow')
   })
 
+  it('merges Sim and NLIP tools in the existing project cache', async () => {
+    const { useFetchAllWorkflows, readCachedSimTools } =
+      await import('../handleFunctionCalling')
+    const remote = { id: 'nlip:lab', name: 'ask_nlip_lab', enabled: true }
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) =>
+      String(url).includes('/nlipTools?')
+        ? Response.json({ tools: [remote] })
+        : workflowsResponse([
+            {
+              id: 'w1',
+              name: 'My Workflow',
+              description: 'desc',
+              inputFields: [],
+            },
+          ]),
+    )
+
+    const tools = await (useFetchAllWorkflows('proj') as any).queryFn()
+    expect(tools.map((tool: { id: string }) => tool.id)).toEqual([
+      'w1',
+      'nlip:lab',
+    ])
+    expect(readCachedSimTools('proj')?.tools).toEqual(tools)
+  })
+
+  it.each(['sim', 'nlip'])(
+    'keeps available tools when %s discovery fails',
+    async (failed) => {
+      const { useFetchAllWorkflows } = await import('../handleFunctionCalling')
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+        const isNlip = String(url).includes('/nlipTools?')
+        if (isNlip === (failed === 'nlip'))
+          throw new Error('provider unavailable')
+        return isNlip
+          ? Response.json({ tools: [{ id: 'nlip:lab', name: 'ask_nlip_lab' }] })
+          : workflowsResponse([
+              {
+                id: 'w1',
+                name: 'My Workflow',
+                description: 'desc',
+                inputFields: [],
+              },
+            ])
+      })
+
+      const tools = await (useFetchAllWorkflows('proj') as any).queryFn()
+      expect(tools).toHaveLength(1)
+      expect(tools[0].id).toBe(failed === 'sim' ? 'nlip:lab' : 'w1')
+    },
+  )
+
   it('throws when course_name is not provided', async () => {
     const { useFetchAllWorkflows } = await import('../handleFunctionCalling')
     expect(() => useFetchAllWorkflows()).toThrow(/course_name is required/i)
@@ -65,9 +115,6 @@ describe('useFetchAllWorkflows', () => {
 
   it('queryFn propagates failures so callers can report the real cause', async () => {
     const { useFetchAllWorkflows } = await import('../handleFunctionCalling')
-
-    localStorage.setItem('sim_api_key_proj', 'sk-sim-test')
-    localStorage.setItem('sim_workspace_id_proj', 'ws-123')
 
     vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('network'))
 
@@ -171,6 +218,9 @@ describe('useFetchAllWorkflows', () => {
 describe('sim tool cache resilience', () => {
   beforeEach(() => {
     localStorage.clear()
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+      Response.json({ tools: [] }),
+    )
   })
 
   afterEach(() => {

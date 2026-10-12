@@ -105,6 +105,12 @@ describe('SimPage', () => {
     expect(screen.getByText('Summarize Paper')).toBeInTheDocument()
     expect(screen.getByText('paper_url')).toBeInTheDocument()
     expect(screen.getByText('No description in Sim')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'NLIP Agents' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Agent-to-Agent communication (NLIP)'),
+    ).not.toBeInTheDocument()
   })
 
   it('saves the config and reports a failed save through a toast', async () => {

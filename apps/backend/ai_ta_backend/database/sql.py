@@ -4,7 +4,7 @@ import os
 from contextlib import contextmanager
 from typing import List, TypedDict, TypeVar, Generic
 
-from sqlalchemy import create_engine, NullPool, func, insert, delete, select, desc, literal, ARRAY, or_
+from sqlalchemy import create_engine, NullPool, func, insert, delete, select, desc, literal, ARRAY, or_, update
 from sqlalchemy.orm import sessionmaker, Session, aliased
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base, DeclarativeMeta
