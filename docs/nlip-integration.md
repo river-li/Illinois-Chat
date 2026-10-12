@@ -18,7 +18,7 @@
 3. 在项目设置中配置可用模型/provider、system prompt、示例问题、访问权限；可以选择文档优先、guided learning、citations 等设置。
 4. 打开 `/<project>/chat`，选择模型，提出文档相关问题。文档组可限制检索范围。
 5. 要使用多轮工具规划，在项目设置中打开 Agent Mode 功能，并在聊天中启用 Agent Mode。它会逐步展示检索、工具执行和最终回答。
-6. 原有 `/<project>/tools` 可连接 Sim AI workspace，把已部署 workflow 转为可调用工具。本次在同一页面加入独立的 NLIP 配置区；NLIP 不要求配置 Sim workspace。
+6. 原有 `/<project>/tools` 可连接 Sim AI workspace，把已部署 workflow 转为可调用工具。NLIP 配置在并列的 `/<project>/nlip` 页面；NLIP 不要求配置 Sim workspace。
 
 另外，聊天中临时附加的文件有单独的处理路径，带 `conversation_id`，与整个 project 的长期文档库有区别。
 第一版 NLIP 入站查询只检索目标 project 的文档，不接受任意 UI conversation ID，不读取另一位用户的聊天附件或聊天历史。
@@ -75,7 +75,8 @@ sequenceDiagram
 | `apps/frontend/src/pages/api/nlip/[course_name].ts` | 项目 NLIP 入站端点与 API key/项目授权 |
 | `apps/frontend/src/pages/api/UIUC-api/tools/nlipAgents.ts` | 管理员读写 NLIP 配置，返回时隐藏凭据 |
 | `apps/frontend/src/pages/api/UIUC-api/tools/nlipTools.ts` | 项目用户发现工具、手动/普通聊天执行 Agent 请求 |
-| `apps/frontend/src/components/UIUC-Components/nlip/NlipAgentsPanel.tsx` | Tools 页面 NLIP 配置表单 |
+| `apps/frontend/src/components/UIUC-Components/NlipPage.tsx` | 与 Tools/Sim AI 并列的 NLIP 设置页 |
+| `apps/frontend/src/components/UIUC-Components/nlip/NlipAgentsPanel.tsx` | NLIP 设置页配置表单 |
 | `apps/frontend/src/hooks/queries/useNlipConfig.ts` | 配置读取/保存与 React Query 缓存刷新 |
 
 现有 `agentServerUtils.ts` 的发现/执行入口合并 Sim 和 NLIP 工具。
@@ -231,8 +232,8 @@ NLIP_ALLOWED_ORIGINS=http://127.0.0.1:18081,http://127.0.0.1:3000
 
 重启 frontend 后：
 
-1. 在 `lab_ta/tools` 打开 NLIP 入站，指定可用 model ID，保存。使用该项目 owner/admin 的有效 Illinois Chat API key。
-2. 在 `course_slides/tools` 登记 `lab`，endpoint 为 `http://127.0.0.1:3000/api/nlip/lab_ta`，把前一步 key 填入 token；登记 `weather`，endpoint 为 `http://127.0.0.1:18081/nlip/`。
+1. 在 `lab_ta/nlip` 打开 NLIP 入站，指定可用 model ID，保存。使用该项目 owner/admin 的有效 Illinois Chat API key。
+2. 在 `course_slides/nlip` 登记 `lab`，endpoint 为 `http://127.0.0.1:3000/api/nlip/lab_ta`，把前一步 key 填入 token；登记 `weather`，endpoint 为 `http://127.0.0.1:18081/nlip/`。
 3. 描述写清用途，例如 `lab` 知道 orientation time/location，`weather` 知道 Champaign forecast。保存后聊天工具列表会刷新。
 4. 在 `course_slides` 项目打开 Agent Mode，问：`For the Champaign field trip, when and where should I meet, and should I bring a raincoat?`
 5. 检查 timeline：应有文档检索、`Ask Lab TA (NLIP)` 和 `Ask Weather Agent (NLIP)`，以及包含三方信息的最终答案。

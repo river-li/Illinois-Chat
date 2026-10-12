@@ -139,9 +139,9 @@ python3 scripts/nlip-demo/create_pdfs.py
 
 配置步骤：
 
-1. 在 `lab_ta/tools` 打开 **Let other agents query this project**；填写可用 model ID 或使用默认模型；保存。
+1. 在 `lab_ta/nlip` 打开 **Let other agents query this project**；填写可用 model ID 或使用默认模型；保存。
 2. 在 `lab_ta/api` 获取该项目 owner/admin 的有效 **Illinois Chat API key**。
-3. 在 `course_slides/tools` 登记下面两个远程 Agent，保存。Lab TA 的 token 填入上一步的 Illinois Chat key。
+3. 在 `course_slides/nlip` 登记下面两个远程 Agent，保存。Lab TA 的 token 填入上一步的 Illinois Chat key。
 
 | ID | Endpoint | Description 示例 | Token |
 | --- | --- | --- | --- |
@@ -192,8 +192,37 @@ curl -i http://127.0.0.1:3000/api/nlip/lab_ta \
 ```bash
 cd apps/frontend
 npm run typecheck
-npx vitest run src/server/nlip/__tests__/protocol.test.ts src/server/nlip/__tests__/config.test.ts src/server/nlip/__tests__/client.test.ts src/server/nlip/__tests__/inbound.test.ts src/server/nlip/__tests__/adminRoutes.test.ts src/components/UIUC-Components/nlip/__tests__/NlipAgentsPanel.test.tsx
+npx vitest run src/server/nlip/__tests__/protocol.test.ts src/server/nlip/__tests__/config.test.ts src/server/nlip/__tests__/client.test.ts src/server/nlip/__tests__/inbound.test.ts src/server/nlip/__tests__/adminRoutes.test.ts src/components/UIUC-Components/nlip/__tests__/NlipAgentsPanel.test.tsx src/components/UIUC-Components/__tests__/NlipPage.test.tsx src/components/Sidebar/__tests__/NavigationSidebar.test.tsx
 bash scripts/nlip-demo/run.sh
+cd ../..
+python3 infra/tests/test_nlip_compare.py
+```
+
+## 4. 并排对比 main（无 NLIP）和本分支
+
+不要起两套完整 Docker 栈：Keycloak + Postgres + 前端在 Docker Desktop 上很容易 OOM。
+本分支提供一键对比：共用同一套基础设施和同一批 chatbot，再额外构建一个 `main` 的前端。
+
+```bash
+# 仓库根目录；NLIP 栈已在跑时会跳过重建
+bash infra/scripts/start-nlip-compare.sh
+
+# 若 NLIP 栈已确认在 :3000
+# bash infra/scripts/start-nlip-compare.sh --skip-stack
+```
+
+脚本会把 `origin/main` checkout 到 `.worktrees/main`（已 gitignore），构建第二个 Next.js 容器，并让 Keycloak 接受 `:3100` 的登录回调。
+
+| 版本 | 地址 | 你会看到 |
+| --- | --- | --- |
+| 本分支（NLIP） | http://localhost:3000 | Tools 上的 NLIP Agents；Agent Mode 可调用 `ask_nlip_*`；`/api/nlip/<project>` |
+| `main` | http://localhost:3100 | 同一账号、同一 `course_slides` / `lab_ta`，没有 NLIP 面板和入站路由 |
+
+两边登录同一个用户（例如 `lizic0228@gmail.com`）。首页横幅会标出 baseline 是 main。
+停掉 main 前端（不影响 :3000）：
+
+```bash
+bash infra/scripts/stop-nlip-compare.sh
 ```
 
 ## 当前验证范围

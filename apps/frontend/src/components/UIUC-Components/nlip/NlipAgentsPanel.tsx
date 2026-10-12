@@ -54,7 +54,7 @@ export default function NlipAgentsPanel({ project }: { project: string }) {
     }
   }
   return (
-    <Card className="mt-6 space-y-4 rounded-4xl p-6">
+    <Card className="mt-[2%] space-y-4 rounded-4xl border p-6 shadow-none ring-0">
       <h2 className="text-xl font-semibold">
         Agent-to-Agent communication (NLIP)
       </h2>

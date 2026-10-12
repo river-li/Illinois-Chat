@@ -32,7 +32,6 @@ import { useResponsiveCardWidth } from '~/utils/responsiveGrid'
 import { CannotEditCourse } from './CannotEditCourse'
 import GlobalFooter from './GlobalFooter'
 import { LoadingPlaceholderForAdminPages } from './MainPageBackground'
-import NlipAgentsPanel from './nlip/NlipAgentsPanel'
 
 interface ToolRoutingStatus {
   status: 'custom' | 'default' | 'offline'
@@ -226,7 +225,7 @@ const SimPage = ({ course_name }: { course_name: string }) => {
         <title>{course_name} - Agent Tools</title>
         <meta
           name="description"
-          content="Configure Sim AI tools and NLIP agent communication for your project."
+          content="Configure Sim AI tools for your project."
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -550,7 +549,6 @@ const SimPage = ({ course_name }: { course_name: string }) => {
                   </Table>
                 )}
             </Card>
-            <NlipAgentsPanel project={course_name} />
           </div>
         </div>
       </main>

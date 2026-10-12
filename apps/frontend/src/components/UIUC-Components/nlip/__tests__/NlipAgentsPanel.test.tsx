@@ -28,7 +28,7 @@ const saved = {
     },
   ],
 }
-describe('NLIP project Tools panel', () => {
+describe('NLIP project configuration panel', () => {
   it('loads config and saves edits while keeping a blank stored credential out of the payload', async () => {
     const fetch = vi
       .spyOn(globalThis, 'fetch')

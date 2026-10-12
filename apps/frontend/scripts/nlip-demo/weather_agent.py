@@ -80,5 +80,10 @@ def demo_trace():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=18081)
+    parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="Bind address. 0.0.0.0 lets Docker containers reach this agent via host.docker.internal.",
+    )
     args = parser.parse_args()
-    uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")
+    uvicorn.run(app, host=args.host, port=args.port, log_level="warning")
