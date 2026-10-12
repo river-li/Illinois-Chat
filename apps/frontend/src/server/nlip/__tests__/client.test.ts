@@ -42,6 +42,7 @@ describe('NLIP HTTP client and tool adapter', () => {
     vi.stubGlobal('fetch', fetch)
     const result = await askNlipAgent('course', 'ta', 'Question')
     expect(result.text).toContain('slide 1')
+    expect(result.data?.nlipReplyText).toBe('Answer')
     expect(JSON.stringify(result)).not.toMatch(/private-token|do-not-display/)
     expect(mocks.resolve).toHaveBeenCalledWith('course', 'ta')
   })

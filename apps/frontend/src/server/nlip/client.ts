@@ -109,7 +109,17 @@ export async function askNlipAgent(
     throw new Error('NLIP response contains no supported answer content')
   return {
     text: content,
-    data: { protocol: 'NLIP', agentId: id, conversation },
+    data: {
+      protocol: 'NLIP',
+      agentId: id,
+      conversation,
+      // Keep structured evidence in `text` for the model, and the remote
+      // agent's prose separately for the conversation shown in project chat.
+      nlipReplyText: parts
+        .filter((p) => p.format === 'text' && typeof p.content === 'string')
+        .map((p) => p.content)
+        .join('\n'),
+    },
   }
 }
 

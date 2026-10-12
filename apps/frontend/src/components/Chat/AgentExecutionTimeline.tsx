@@ -6,17 +6,27 @@ import {
   ChainOfThoughtContent,
   ChainOfThoughtHeader,
   ChainOfThoughtStep,
-  ChainOfThoughtSearchResults,
-  ChainOfThoughtSearchResult,
 } from '@/components/ai-elements/chain-of-thought'
 import { cn } from '@/components/shadcn/lib/utils'
-import { Search, Wrench, CheckCircle2, Clock } from 'lucide-react'
+import {
+  Search,
+  Wrench,
+  CheckCircle2,
+  Clock,
+  MessagesSquare,
+} from 'lucide-react'
 import { LoadingSpinner } from '@/components/UIUC-Components/LoadingSpinner'
-import type { AgentEvent, AgentEventMetadata } from '@/types/chat'
+import type { AgentEvent } from '@/types/chat'
+import {
+  NlipConversation,
+  nlipAgentName,
+  nlipConversationStatus,
+} from './NlipConversation'
 
 interface AgentExecutionTimelineProps {
   events?: AgentEvent[]
   isRunning?: boolean
+  projectName?: string
 }
 
 // Grouped event - multiple retrievals in same step become one group
@@ -33,6 +43,8 @@ interface GroupedEvent {
   // For non-retrieval events
   title?: string
   detail?: string
+  toolName?: string
+  question?: string
   errorMessage?: string
   createdAt: string
   updatedAt?: string
@@ -69,7 +81,17 @@ const groupEventsByStep = (events: AgentEvent[]): GroupedEvent[] => {
           event.metadata?.readableToolName ??
           event.metadata?.toolName ??
           'Tool',
-        detail: event.metadata?.outputText || event.metadata?.info,
+        detail:
+          event.metadata?.toolName?.startsWith('ask_nlip_') &&
+          typeof event.metadata?.outputData?.nlipReplyText === 'string' &&
+          event.metadata.outputData.nlipReplyText
+            ? event.metadata.outputData.nlipReplyText
+            : event.metadata?.outputText || event.metadata?.info,
+        toolName: event.metadata?.toolName,
+        question:
+          typeof event.metadata?.arguments?.question === 'string'
+            ? event.metadata.arguments.question
+            : undefined,
         errorMessage: event.metadata?.errorMessage,
         createdAt: event.createdAt,
         updatedAt: event.updatedAt,
@@ -164,11 +186,16 @@ const formatElapsedTime = (seconds: number): string => {
 export const AgentExecutionTimeline = ({
   events,
   isRunning = false,
+  projectName,
 }: AgentExecutionTimelineProps) => {
   const groupedEvents = useMemo(() => {
     if (!events) return []
     return groupEventsByStep(events)
   }, [events])
+
+  const agentConversations = groupedEvents.filter((event) =>
+    event.toolName?.startsWith('ask_nlip_'),
+  )
 
   // Get all queries for scrolling preview
   const allQueries = useMemo(
@@ -290,7 +317,8 @@ export const AgentExecutionTimeline = ({
 
   const getIcon = (event: GroupedEvent) => {
     if (event.type === 'retrieval_group') return Search
-    if (event.type === 'tool') return Wrench
+    if (event.type === 'tool')
+      return event.toolName?.startsWith('ask_nlip_') ? MessagesSquare : Wrench
     if (event.type === 'final_response') return CheckCircle2
     return undefined
   }
@@ -324,6 +352,20 @@ export const AgentExecutionTimeline = ({
         {/* Collapsed preview - show scrolling queries */}
         {!isOpen && showPreview && (
           <div className="px-3 pt-1">
+            {agentConversations.length > 0 && (
+              <div className="mb-2 space-y-1 text-xs">
+                <p className="font-medium">
+                  {agentConversations.length} agent conversation
+                  {agentConversations.length === 1 ? '' : 's'}
+                </p>
+                {agentConversations.map((event) => (
+                  <p key={event.id}>
+                    {nlipAgentName(event.toolName!, event.title)} ·{' '}
+                    {nlipConversationStatus(event.status)}
+                  </p>
+                ))}
+              </div>
+            )}
             {/* Queries list */}
             <div
               ref={previewRef}
@@ -476,17 +518,31 @@ export const AgentExecutionTimeline = ({
                 icon={icon}
                 label={
                   <div className="space-y-1">
-                    <div className="text-(--foreground)">{event.title}</div>
-                    {event.detail && (
-                      <div className="text-sm text-(--foreground-faded)">
-                        {event.detail}
-                      </div>
+                    {event.toolName?.startsWith('ask_nlip_') ? (
+                      <NlipConversation
+                        sourceProject={projectName}
+                        toolName={event.toolName}
+                        readableName={event.title}
+                        question={event.question}
+                        reply={event.detail}
+                        status={event.status}
+                        errorMessage={event.errorMessage}
+                      />
+                    ) : (
+                      <div className="text-(--foreground)">{event.title}</div>
                     )}
-                    {event.errorMessage && (
-                      <div className="text-sm text-red-500">
-                        {event.errorMessage}
-                      </div>
-                    )}
+                    {!event.toolName?.startsWith('ask_nlip_') &&
+                      event.detail && (
+                        <div className="text-sm text-(--foreground-faded)">
+                          {event.detail}
+                        </div>
+                      )}
+                    {!event.toolName?.startsWith('ask_nlip_') &&
+                      event.errorMessage && (
+                        <div className="text-sm text-red-500">
+                          {event.errorMessage}
+                        </div>
+                      )}
                   </div>
                 }
               />
